@@ -1639,7 +1639,7 @@ if( CONTEXTUALIZE->parent ) {                                           \
       // Set the first element as Parent, start iterating from 1 after begin()
       std::vector<Selector_List*>::iterator itr = parsedSelectors.begin();
       Selector_List* parent = *itr;
-      itr++;
+      ++itr;
       for(;itr != parsedSelectors.end(); ++itr) {
         
         Selector_List* child = *itr;
@@ -1650,25 +1650,21 @@ if( CONTEXTUALIZE->parent ) {                                           \
             // Add that clone to newElements
         // Replace CHILD.elements with newElements
         vector<Complex_Selector*> newElements;
-        for (Complex_Selector* seq : child->elements()) {
-          for(Complex_Selector* pSeq : parent->elements() ) {
+        for(Complex_Selector* pSeq : parent->elements() ) {
+          for (Complex_Selector* seq : child->elements()) {
             Complex_Selector* seq_clone = seq->cloneFully(ctx);
 
 //            std::cout << "--------\nparent:" << parent->perform(&to_string) << std::endl;
 //            std::cout << "pSeq:" << pSeq->perform(&to_string) << std::endl;
 //            std::cout << "\nchild:" << child->perform(&to_string) << std::endl;
 //            std::cout << "cSeq:" << seq_clone->perform(&to_string) << std::endl;
-
+//
             Selector_Reference* ref = new (ctx.mem) Selector_Reference(pSeq->pstate(), pSeq);
             seq_clone->tail()->head()->unshift(ref);
             newElements.push_back(seq_clone);
           }
         }
         
-        // Sort the final Complex_Selectors list alphabetically to match sass output
-        std::sort(newElements.begin(), newElements.end(), [](Complex_Selector* a, Complex_Selector* b){
-          return *a < *b;
-        });
         child->elements(newElements);
         
 //        string s = child->perform(&to_string);
@@ -1676,7 +1672,7 @@ if( CONTEXTUALIZE->parent ) {                                           \
 //        std::cout << "\n\tEndChild:" << child->mCachedSelector() << std::endl;
         parent = child;
       }
-      
+
       return new (ctx.mem) String_Constant(pstate, parent->perform(&to_string));
     }
     
