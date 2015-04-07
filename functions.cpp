@@ -1737,7 +1737,7 @@ if( CONTEXTUALIZE->parent ) {                                           \
     Signature simple_selectors_sig = "simple_selectors($selector)";
     BUILT_IN(simple_selectors)
     {
-      Compound_Selector* sel = ARGSEL("$selector1", Compound_Selector, p_contextualize);
+      Compound_Selector* sel = ARGSEL("$selector", Compound_Selector, p_contextualize);
       
       To_String to_string;
       List* l = new (ctx.mem) List(sel->pstate(), sel->length(), List::COMMA);
