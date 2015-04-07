@@ -1636,12 +1636,11 @@ if( CONTEXTUALIZE->parent ) {                                           \
         return new (ctx.mem) Null(pstate);
       }
       
-      Selector_List* parent = 0;
-      for(std::vector<Selector_List*>::iterator itr = parsedSelectors.begin(); itr != parsedSelectors.end(); ++itr) {
-        if( itr == parsedSelectors.begin() ) {
-          parent = *itr;
-          continue;
-        }
+      // Set the first element as Parent, start iterating from 1 after begin()
+      std::vector<Selector_List*>::iterator itr = parsedSelectors.begin();
+      Selector_List* parent = *itr;
+      itr++;
+      for(;itr != parsedSelectors.end(); ++itr) {
         
         Selector_List* child = *itr;
         
@@ -1654,7 +1653,7 @@ if( CONTEXTUALIZE->parent ) {                                           \
         for (Complex_Selector* seq : child->elements()) {
           for(Complex_Selector* pSeq : parent->elements() ) {
             Complex_Selector* seq_clone = seq->cloneFully(ctx);
-            
+
 //            std::cout << "--------\nparent:" << parent->perform(&to_string) << std::endl;
 //            std::cout << "pSeq:" << pSeq->perform(&to_string) << std::endl;
 //            std::cout << "\nchild:" << child->perform(&to_string) << std::endl;
@@ -1666,17 +1665,21 @@ if( CONTEXTUALIZE->parent ) {                                           \
           }
         }
         
+        // Sort the final Complex_Selectors list alphabetically to match sass output
+        std::sort(newElements.begin(), newElements.end(), [](Complex_Selector* a, Complex_Selector* b){
+          return *a < *b;
+        });
         child->elements(newElements);
-        
         
 //        string s = child->perform(&to_string);
 //        child->mCachedSelector(s);
 //        std::cout << "\n\tEndChild:" << child->mCachedSelector() << std::endl;
         parent = child;
       }
-     
+      
       return new (ctx.mem) String_Constant(pstate, parent->perform(&to_string));
     }
+    
     Signature selector_extend_sig = "selector-extend($selector, $extendee, $extender)";
     BUILT_IN(selector_extend)
     {
