@@ -1609,7 +1609,56 @@ if( CONTEXTUALIZE->parent ) {                                           \
     Signature selector_nest_sig = "selector-nest($selectors...)";
     BUILT_IN(selector_nest)
     {
-      return new (ctx.mem) String_Constant(pstate, "selector_nest");
+      To_String to_string;
+      List* arglist = ARG("$selectors", List);
+      
+      // Not enough parameters
+      if( arglist->length() == 0 )
+        error("$selectors: At least one selector must be passed", pstate);
+      
+      // Parse args into vector of selectors
+      vector<Selector_List*> parsedSelectors;
+      for (size_t i = 0, L = arglist->length(); i < L; ++i) {
+        Expression* exp = dynamic_cast<Expression*>(arglist->value_at_index(i));
+        create_sel_parser(p_contextualize);
+        Selector_List* sel = p.parse_selector_group();
+        
+        parsedSelectors.push_back(sel);
+      }
+      
+      // Nothing to do
+      if( parsedSelectors.empty() ) {
+        return new (ctx.mem) Null(pstate);
+      }
+      
+      // Set the first element as Parent, start iterating from 1 after begin()
+      std::vector<Selector_List*>::iterator itr = parsedSelectors.begin();
+      Selector_List* parent = *itr;
+      ++itr;
+      
+      for(;itr != parsedSelectors.end(); ++itr) {
+        Selector_List* child = *itr;
+        
+        // For every Complex_Selector in PARENT
+          // For every Complex_Selector in CHILD
+              // Set the HEAD of the 'seq' (the CHILD's Complex_Selector) to that 'pseq' (the PARENTS Complex_Selector)
+        for(Complex_Selector* pSeq : parent->elements() ) {
+          for (Complex_Selector* seq : child->elements()) {
+            Compound_Selector* fakeHead = new (ctx.mem) Compound_Selector(seq->pstate(), 1);
+            Selector_Reference* ref = new (ctx.mem) Selector_Reference(pSeq->pstate(), pSeq);
+            *fakeHead << ref;
+            seq->head(fakeHead);
+          }
+        }
+        parent = child;
+      }
+      
+#ifdef DEBUG
+      string s = parent->perform(&to_string);
+      parent->mCachedSelector(s);
+//      std::cout << "\n\tEndChild:" << parent->mCachedSelector() << std::endl;
+#endif
+      return new (ctx.mem) String_Constant(pstate, parent->perform(&to_string));
     }
     Signature selector_append_sig = "selector-append($selectors...)";
     BUILT_IN(selector_append)
