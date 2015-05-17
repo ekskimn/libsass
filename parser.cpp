@@ -299,7 +299,7 @@ namespace Sass {
           Expression* the_url = parse_string();
           *args << new (ctx.mem) Argument(the_url->pstate(), the_url);
         }
-        else if (lex < uri_value >(position)) { // chunk seems to work too!
+        else if (lex < uri_value >(position != 0)) { // chunk seems to work too!
           String* the_url = parse_interpolated_chunk(lexed);
           *args << new (ctx.mem) Argument(the_url->pstate(), the_url);
         }
@@ -750,7 +750,7 @@ namespace Sass {
       if (lex< alternatives< even, odd > >()) {
         expr = new (ctx.mem) String_Quoted(p, lexed);
       }
-      else if (lex< binomial >(position)) {
+      else if (lex< binomial >(position != 0)) {
         expr = new (ctx.mem) String_Constant(p, lexed);
         ((String_Constant*)expr)->can_compress_whitespace(true);
       }
