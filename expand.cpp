@@ -121,7 +121,7 @@ namespace Sass {
     string str = isp.get_buffer();
     str += ";";
 
-    Parser p(ctx, r->pstate());
+    Parser p(ctx, ctx.mem, r->pstate());
     p.block_stack.push_back(block_stack.back());
     p.last_media_block = r->selector() ? r->selector()->media_block() : 0;
     p.source   = str.c_str();
@@ -189,7 +189,7 @@ namespace Sass {
   {
     To_String to_string(&ctx);
     Expression* mq = m->media_queries()->perform(&eval);
-    mq = Parser::from_c_str(mq->perform(&to_string).c_str(), ctx, mq->pstate()).parse_media_queries();
+    mq = Parser::from_c_str(mq->perform(&to_string).c_str(), ctx, ctx.mem, mq->pstate()).parse_media_queries();
     Media_Block* mm = new (ctx.mem) Media_Block(m->pstate(),
                                                 static_cast<List*>(mq),
                                                 m->block()->perform(this)->block(),

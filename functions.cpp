@@ -38,7 +38,7 @@ namespace Sass {
 
   Definition* make_native_function(Signature sig, Native_Function func, Context& ctx)
   {
-    Parser sig_parser = Parser::from_c_str(sig, ctx, ParserState("[built-in function]"));
+    Parser sig_parser = Parser::from_c_str(sig, ctx, ctx.mem, ParserState("[built-in function]"));
     sig_parser.lex<Prelexer::identifier>();
     string name(Util::normalize_underscores(sig_parser.lexed));
     Parameters* params = sig_parser.parse_parameters();
@@ -54,7 +54,7 @@ namespace Sass {
   Definition* make_c_function(Sass_Function_Entry c_func, Context& ctx)
   {
     const char* sig = sass_function_get_signature(c_func);
-    Parser sig_parser = Parser::from_c_str(sig, ctx, ParserState("[c function]"));
+    Parser sig_parser = Parser::from_c_str(sig, ctx, ctx.mem, ParserState("[c function]"));
     // allow to overload generic callback plus @warn, @error and @debug with custom functions
     sig_parser.lex < alternatives < identifier, exactly <'*'>,
                                     exactly < Constants::warn_kwd >,
@@ -1569,8 +1569,8 @@ namespace Sass {
       Expression*  ex_sub = ARG("$sub", Expression);
       string sup_src = ex_sup->perform(&to_string) + "{";
       string sub_src = ex_sub->perform(&to_string) + "{";
-      Selector_List* sel_sup = Parser::parse_selector(sup_src.c_str(), ctx);
-      Selector_List* sel_sub = Parser::parse_selector(sub_src.c_str(), ctx);
+      Selector_List* sel_sup = Parser::parse_selector(sup_src.c_str(), ctx, ctx.mem);
+      Selector_List* sel_sub = Parser::parse_selector(sub_src.c_str(), ctx, ctx.mem);
       bool result = sel_sup->is_superselector_of(sel_sub);
       return new (ctx.mem) Boolean(pstate, result);
     }

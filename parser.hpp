@@ -24,10 +24,10 @@ namespace Sass {
 
   class Parser : public ParserState {
   private:
+    Memory_Manager<AST_Node>& mem;
     void add_single_file (Import* imp, string import_path);
     void import_single_file (Import* imp, string import_path);
   public:
-    class AST_Node;
 
     enum Syntactic_Context { nothing, mixin_def, function_def };
     bool do_import(const string& import_path, Import* imp, vector<Sass_Importer_Entry> importers, bool only_one = true);
@@ -48,17 +48,17 @@ namespace Sass {
     Token lexed;
     bool in_at_root;
 
-    Parser(Context& ctx, const ParserState& pstate)
-    : ParserState(pstate), ctx(ctx), block_stack(0), stack(0), last_media_block(0),
+    Parser(Context& ctx, Memory_Manager<AST_Node>& mem, const ParserState& pstate)
+    : ParserState(pstate), mem(mem), ctx(ctx), block_stack(0), stack(0), last_media_block(0),
       source(0), position(0), end(0), before_token(pstate), after_token(pstate), pstate(pstate), indentation(0)
     { in_at_root = false; stack.push_back(nothing); }
 
     // static Parser from_string(const string& src, Context& ctx, ParserState pstate = ParserState("[STRING]"));
-    static Parser from_c_str(const char* src, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
-    static Parser from_c_str(const char* beg, const char* end, Context& ctx, ParserState pstate = ParserState("[CSTRING]"));
-    static Parser from_token(Token t, Context& ctx, ParserState pstate = ParserState("[TOKEN]"));
+    static Parser from_c_str(const char* src, Context& ctx, Memory_Manager<AST_Node>& mem, ParserState pstate = ParserState("[CSTRING]"));
+    static Parser from_c_str(const char* beg, const char* end, Context& ctx, Memory_Manager<AST_Node>& mem, ParserState pstate = ParserState("[CSTRING]"));
+    static Parser from_token(Token t, Context& ctx, Memory_Manager<AST_Node>& mem, ParserState pstate = ParserState("[TOKEN]"));
     // special static parsers to convert strings into certain selectors
-    static Selector_List* parse_selector(const char* src, Context& ctx, ParserState pstate = ParserState("[SELECTOR]"));
+    static Selector_List* parse_selector(const char* src, Context& ctx, Memory_Manager<AST_Node>& mem, ParserState pstate = ParserState("[SELECTOR]"));
 
 #ifdef __clang__
 

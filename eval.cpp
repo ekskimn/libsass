@@ -1486,7 +1486,7 @@ namespace Sass {
     To_String to_string;
     string result_str(s->contents()->perform(this)->perform(&to_string));
     result_str += '{'; // the parser looks for a brace to end the selector
-    Selector* result_sel = Parser::from_c_str(result_str.c_str(), ctx, s->pstate()).parse_selector_group();
+    Selector* result_sel = Parser::from_c_str(result_str.c_str(), ctx, ctx.mem, s->pstate()).parse_selector_group();
     return result_sel->perform(this);
   }
 

@@ -1959,7 +1959,7 @@ namespace Sass {
       pObject->selector(
         Parser::from_c_str(
           (pNewSelectorList->perform(&to_string) + ";").c_str(),
-          ctx,
+          ctx, ctx.mem,
           pNewSelectorList->pstate()
         ).parse_selector_group()
       );
