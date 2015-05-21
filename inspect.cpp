@@ -849,6 +849,7 @@ namespace Sass {
   {
     append_token(s->name(), s);
     if (s->expression()) {
+      append_string("(");
       s->expression()->perform(this);
       append_string(")");
     }
@@ -859,6 +860,7 @@ namespace Sass {
     bool was = in_wrapped;
     in_wrapped = true;
     append_token(s->name(), s);
+    append_string("(");
     s->selector()->perform(this);
     append_string(")");
     in_wrapped = was;
@@ -917,6 +919,7 @@ namespace Sass {
     if (g->empty()) return;
     for (size_t i = 0, L = g->length(); i < L; ++i) {
       if (!in_wrapped && i == 0) append_indentation();
+      if ((*g)[i] == 0) continue;
       (*g)[i]->perform(this);
       if (i < L - 1) {
         append_comma_separator();

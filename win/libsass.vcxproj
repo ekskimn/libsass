@@ -181,6 +181,12 @@
     <ClCompile Include="..\emitter.cpp" />
     <ClCompile Include="..\output.cpp" />
     <ClCompile Include="..\parser.cpp" />
+    <ClCompile Include="..\parser_feature.cpp" />
+    <ClCompile Include="..\parser_functions.cpp" />
+    <ClCompile Include="..\parser_media.cpp" />
+    <ClCompile Include="..\parser_scss.cpp" />
+    <ClCompile Include="..\parser_selectors.cpp" />
+    <ClCompile Include="..\parser_values.cpp" />
     <ClCompile Include="..\plugins.cpp" />
     <ClCompile Include="..\position.cpp" />
     <ClCompile Include="..\lexer.cpp" />

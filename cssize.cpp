@@ -248,7 +248,7 @@ namespace Sass {
     At_Root_Block* mm = new (ctx.mem) At_Root_Block(m->pstate(),
                                                     wrapper_block,
                                                     m->expression());
-
+    // mm->block()->is_root(true);
     Bubble* bubble = new (ctx.mem) Bubble(mm->pstate(), mm);
     return bubble;
   }
@@ -428,10 +428,9 @@ namespace Sass {
         else
         {
           List* mq = merge_media_queries(static_cast<Media_Block*>(b->node()), static_cast<Media_Block*>(parent));
-          if (mq->length()) {
-            static_cast<Media_Block*>(b->node())->media_queries(mq);
-            ss = b->node();
-          }
+          if (!mq->length()) continue;
+          static_cast<Media_Block*>(b->node())->media_queries(mq);
+          ss = b->node();
         }
 
         if (!ss) continue;

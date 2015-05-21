@@ -12,6 +12,7 @@
 #include "backtrace.hpp"
 #include "context.hpp"
 #include "parser.hpp"
+#include "debugger.hpp"
 
 namespace Sass {
 
@@ -35,7 +36,6 @@ namespace Sass {
     backtrace_stack.push_back(bt);
   }
 
-
   Context& Expand::context()
   {
     return ctx;
@@ -43,21 +43,21 @@ namespace Sass {
 
   Env* Expand::environment()
   {
-    if (env_stack.size())
+    if (env_stack.size() > 0)
       return env_stack.back();
     return 0;
   }
 
   Selector* Expand::selector()
   {
-    if (selector_stack.size())
+    if (selector_stack.size() > 0)
       return selector_stack.back();
     return 0;
   }
 
   Backtrace* Expand::backtrace()
   {
-    if (backtrace_stack.size())
+    if (backtrace_stack.size() > 0)
       return backtrace_stack.back();
     return 0;
   }
@@ -84,6 +84,22 @@ namespace Sass {
     return bb;
   }
 
+  Statement* Expand::operator()(At_Root_Block* a)
+  {
+    Block* ab = a->block();
+    // cerr << "got at block " << ab << " vs " << ab->is_root() << endl;
+    // if (ab) ab->is_root(true);
+    Expression* ae = a->expression();
+    if (ae) ae = ae->perform(&eval);
+    else ae = new (ctx.mem) At_Root_Expression(a->pstate());
+    Block* bb = ab ? ab->perform(this)->block() : 0;
+    At_Root_Block* aa = new (ctx.mem) At_Root_Block(a->pstate(),
+                                                    bb,
+                                                    static_cast<At_Root_Expression*>(ae));
+    // aa->block()->is_root(true);
+    return aa;
+  }
+
   // process and add to last block on stack
   inline void Expand::append_block(Block* b)
   {
@@ -101,10 +117,10 @@ namespace Sass {
     if (in_keyframes) {
       Keyframe_Rule* k = new (ctx.mem) Keyframe_Rule(r->pstate(), r->block()->perform(this)->block());
       if (r->selector()) {
-        selector_stack.push_back(0);
+        selector_push(0);
         // Contextualize contextual(&eval);
         k->selector(static_cast<Selector_List*>(r->selector()->perform(&eval)));
-        selector_stack.pop_back();
+        selector_pop();
       }
       return k;
     }
@@ -127,18 +143,18 @@ namespace Sass {
     p.source   = str.c_str();
     p.position = str.c_str();
     p.end      = str.c_str() + strlen(str.c_str());
-    Selector_List* sel_lst = p.parse_selector_group();
+    Selector_List* sel_lst = p.parse_selector_list();
     // sel_lst->pstate(isp.remap(sel_lst->pstate()));
 
     sel_ctx = sel_lst;
 
-    selector_stack.push_back(sel_ctx);
+    selector_push(sel_ctx);
     Block* blk = r->block()->perform(this)->block();
     Ruleset* rr = new (ctx.mem) Ruleset(r->pstate(),
                                         sel_ctx,
                                         blk);
     rr->tabs(r->tabs());
-    selector_stack.pop_back();
+    selector_pop();
     return rr;
   }
 
@@ -181,7 +197,7 @@ namespace Sass {
     Feature_Block* ff = new (ctx.mem) Feature_Block(f->pstate(),
                                                     static_cast<Feature_Query*>(feature_queries),
                                                     f->block()->perform(this)->block());
-    ff->selector(selector_stack.back());
+    ff->selector(selector());
     return ff;
   }
 
@@ -193,25 +209,11 @@ namespace Sass {
     Media_Block* mm = new (ctx.mem) Media_Block(m->pstate(),
                                                 static_cast<List*>(mq),
                                                 m->block()->perform(this)->block(),
-                                                selector_stack.back());
+                                                selector());
     mm->tabs(m->tabs());
     return mm;
   }
 
-  Statement* Expand::operator()(At_Root_Block* a)
-  {
-    in_at_root = true;
-    Block* ab = a->block();
-    Expression* ae = a->expression();
-    if (ae) ae = ae->perform(&eval);
-    else ae = new (ctx.mem) At_Root_Expression(a->pstate());
-    Block* bb = ab ? ab->perform(this)->block() : 0;
-    At_Root_Block* aa = new (ctx.mem) At_Root_Block(a->pstate(),
-                                                    bb,
-                                                    static_cast<At_Root_Expression*>(ae));
-    in_at_root = false;
-    return aa;
-  }
 
   Statement* Expand::operator()(At_Rule* a)
   {
@@ -219,11 +221,11 @@ namespace Sass {
     Block* ab = a->block();
     Selector* as = a->selector();
     Expression* av = a->value();
-    selector_stack.push_back(0);
+    selector_push(0);
     // Contextualize contextual(&eval);
     if (as) as = static_cast<Selector_List*>(as->perform(&eval));
     else if (av) av = av->perform(&eval);
-    selector_stack.pop_back();
+    selector_pop();
     Block* bb = ab ? ab->perform(this)->block() : 0;
     At_Rule* aa = new (ctx.mem) At_Rule(a->pstate(),
                                         a->keyword(),
@@ -509,9 +511,9 @@ namespace Sass {
   Statement* Expand::operator()(Extension* e)
   {
     To_String to_string(&ctx);
-    Selector_List* extender = static_cast<Selector_List*>(selector_stack.back());
+    Selector_List* extender = static_cast<Selector_List*>(selector());
     if (!extender) return 0;
-    selector_stack.push_back(0);
+    selector_push(0);
 
     // Contextualize contextual(&eval);
     Selector_List* selector_list = static_cast<Selector_List*>(e->selector());
@@ -537,7 +539,7 @@ namespace Sass {
         ctx.subset_map.put(compound_sel->to_str_vec(), make_pair((*extender)[i], compound_sel));
       }
     }
-    selector_stack.pop_back();
+    selector_pop();
     return 0;
   }
 

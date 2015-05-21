@@ -256,7 +256,7 @@ namespace Sass {
       return word<return_kwd>(src);
     }
 
-    const char* kwd_include(const char* src) {
+    const char* kwd_include_directive(const char* src) {
       return word<include_kwd>(src);
     }
 
@@ -341,10 +341,7 @@ namespace Sass {
     // Match CSS type selectors
     const char* namespace_prefix(const char* src) {
       return sequence< optional< alternatives< identifier, exactly<'*'> > >,
-                       exactly<'|'> >(src);
-    }
-    const char* type_selector(const char* src) {
-      return sequence< optional<namespace_prefix>, identifier>(src);
+                       exactly<'|'>, negate<exactly<'='>> >(src);
     }
     const char* hyphens_and_identifier(const char* src) {
       return sequence< zero_plus< exactly< '-' > >, identifier >(src);
@@ -391,13 +388,15 @@ namespace Sass {
                            sign >(src);
     }
     const char* binomial(const char* src) {
-      return sequence< optional<sign>,
-                       optional<digits>,
-                       exactly<'n'>,
-                       zero_plus < space >,
-                       sign,
-                       zero_plus < space >,
-                       digits >(src);
+      return sequence <
+               optional < sign >,
+               optional < digits >,
+               exactly <'n'>,
+               zero_plus < sequence <
+                 optional_css_whitespace, sign,
+                 optional_css_whitespace, digits
+               > >
+             >(src);
     }
     const char* percentage(const char* src) {
       return sequence< number, exactly<'%'> >(src);
@@ -476,13 +475,13 @@ namespace Sass {
                        filename_schema >(src); // optional trailing slash
     }*/
     // Match CSS "!important" keyword.
-    const char* important(const char* src) {
+    const char* kwd_important(const char* src) {
       return sequence< exactly<'!'>,
                        optional_css_whitespace,
                        word<important_kwd> >(src);
     }
     // Match CSS "!optional" keyword.
-    const char* optional(const char* src) {
+    const char* kwd_optional(const char* src) {
       return sequence< exactly<'!'>,
       optional_css_whitespace,
       word<optional_kwd> >(src);
@@ -507,8 +506,13 @@ namespace Sass {
     const char* functional_schema(const char* src) {
       return sequence< identifier_schema, exactly<'('> >(src);
     }
-    const char* functional(const char* src) {
-      return sequence< identifier, exactly<'('> >(src);
+
+    const char* re_nothing(const char* src) {
+      return src;
+    }
+
+    const char* re_pseudo_selector(const char* src) {
+      return sequence< identifier, optional < block_comment >, exactly<'('> >(src);
     }
     // Match the CSS negation pseudo-class.
     const char* pseudo_not(const char* src) {
@@ -779,6 +783,23 @@ namespace Sass {
         >
       >(src);
     }
+
+    const char* type_selector(const char* src) {
+      return sequence< optional<namespace_prefix>, identifier>(src);
+    }
+
+    const char* re_type_selector(const char* src) {
+      return alternatives< type_selector, universal, quoted_string, dimension, percentage, number, identifier_alnums >(src);
+    }
+
+    const char* re_type_selector2(const char* src) {
+      return alternatives< type_selector, universal, quoted_string, dimension, percentage, number, identifier_alnums >(src);
+    }
+
+    const char* re_static_expression(const char* src) {
+      return sequence< number, optional_spaces, exactly<'/'>, optional_spaces, number >(src);
+    }
+
 
   }
 }

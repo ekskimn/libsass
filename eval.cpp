@@ -21,6 +21,7 @@
 #include "prelexer.hpp"
 #include "parser.hpp"
 #include "expand.hpp"
+#include "debugger.hpp"
 
 namespace Sass {
   using namespace std;
@@ -856,9 +857,29 @@ namespace Sass {
       string str = str_constant->value();
       if (!str_constant->quote_mark()) str = unquote(str);
       return evacuate_escapes(str);
-    } else if (dynamic_cast<Parent_Selector*>(s)) {
+    } else if (Parent_Selector* pr = dynamic_cast<Parent_Selector*>(s)) {
       To_String to_string(&ctx);
-      return evacuate_quotes(s->perform(&listize)->perform(this)->perform(&listize)->perform(this)->perform(&to_string));
+
+Selector* bac = 0;
+if (pr->not_selector()) {
+  // bac = exp.selector_stack.back();
+  // exp.selector_stack.pop_back();
+}
+
+      auto* sel = s;
+//      sel = sel->perform(&listize);
+//      sel = sel->perform(this);
+//      sel = sel->perform(&listize);
+//      auto* bac = exp.selector_stack.back();
+//      exp.selector_stack.pop_back();
+      sel = sel->perform(this);
+if (pr->not_selector()) {
+  // exp.selector_stack.push_back(bac);
+}
+string qwe = sel ? sel->perform(&to_string) : "";
+//      exp.selector_stack.push_back(bac);
+      return evacuate_quotes(qwe);
+
     } else if (Selector_List* sel = dynamic_cast<Selector_List*>(s)) {
       To_String to_string(&ctx);
       return evacuate_quotes(sel->perform(&listize)->perform(this)->perform(&to_string));
@@ -1378,7 +1399,6 @@ namespace Sass {
     if (p) {
       ss = new (ctx.mem) Selector_List(s->pstate(), p->length() * s->length());
       if (s->length() == 0) {
-      	exit (77);
           Complex_Selector* comb = static_cast<Complex_Selector*>(parent->perform(this));
           if (parent->has_line_feed()) comb->has_line_feed(true);
           if (comb) *ss << comb;
@@ -1402,7 +1422,6 @@ namespace Sass {
     }
     else {
       ss = new (ctx.mem) Selector_List(s->pstate());
-      ss->last_block(s->last_block());
       ss->media_block(s->media_block());
       for (size_t j = 0, L = s->length(); j < L; ++j) {
         Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
@@ -1417,7 +1436,6 @@ namespace Sass {
   {
     To_String to_string(&ctx);
     Complex_Selector* ss = new (ctx.mem) Complex_Selector(*s);
-    ss->last_block(s->last_block());
     ss->media_block(s->media_block());
     Compound_Selector* new_head = 0;
     Complex_Selector* new_tail = 0;
@@ -1427,7 +1445,6 @@ namespace Sass {
     }
     if (ss->tail()) {
       new_tail = static_cast<Complex_Selector*>(s->tail()->perform(this));
-      new_tail->last_block(s->last_block());
       new_tail->media_block(s->media_block());
       ss->tail(new_tail);
     }
@@ -1442,7 +1459,6 @@ namespace Sass {
   Expression* Eval::operator()(Compound_Selector* s)
   {
     Compound_Selector* ss = new (ctx.mem) Compound_Selector(s->pstate(), s->length());
-    ss->last_block(s->last_block());
     ss->media_block(s->media_block());
     ss->has_line_break(s->has_line_break());
     for (size_t i = 0, L = s->length(); i < L; ++i) {
@@ -1486,7 +1502,8 @@ namespace Sass {
     To_String to_string;
     string result_str(s->contents()->perform(this)->perform(&to_string));
     result_str += '{'; // the parser looks for a brace to end the selector
-    Selector* result_sel = Parser::from_c_str(result_str.c_str(), ctx, ctx.mem, s->pstate()).parse_selector_group();
+    Parser p = Parser::from_c_str(result_str.c_str(), ctx, ctx.mem, s->pstate());
+    Selector* result_sel = p.parse_selector_list(exp.block_stack.back()->is_root());
     return result_sel->perform(this);
   }
 

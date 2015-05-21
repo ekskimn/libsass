@@ -33,6 +33,7 @@
 #include "sass2scss.h"
 #include "prelexer.hpp"
 #include "emitter.hpp"
+#include "debugger.hpp"
 
 namespace Sass {
   using namespace Constants;
@@ -343,7 +344,9 @@ namespace Sass {
     Expand expand(*this, &global, &backtrace);
     Cssize cssize(*this, &global, &backtrace);
     // expand and eval the tree
+//    debug_ast(root);
     root = root->perform(&expand)->block();
+//    debug_ast(root);
     // merge and bubble certain rules
     root = root->perform(&cssize)->block();
     // should we extend something?
@@ -358,6 +361,7 @@ namespace Sass {
     // ToDo: maybe we can do this somewhere else?
     Remove_Placeholders remove_placeholders(*this);
     root->perform(&remove_placeholders);
+//    debug_ast(root);
 
     // return processed tree
     return root;

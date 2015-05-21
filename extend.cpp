@@ -1961,7 +1961,7 @@ namespace Sass {
           (pNewSelectorList->perform(&to_string) + ";").c_str(),
           ctx, ctx.mem,
           pNewSelectorList->pstate()
-        ).parse_selector_group()
+        ).parse_selector_list()
       );
     } else {
       DEBUG_PRINTLN(EXTEND_OBJECT, "EXTEND DID NOT TRY TO EXTEND ANYTHING")

@@ -40,6 +40,16 @@ namespace Sass {
     bool              in_at_root;
     bool              in_keyframes;
 
+    size_t selector_depth() {
+      return selector_stack.size();
+    }
+    void selector_pop() {
+      selector_stack.pop_back();
+    }
+    void selector_push(Selector* s) {
+      selector_stack.push_back(s);
+    }
+
     Statement* fallback_impl(AST_Node* n);
 
   public:

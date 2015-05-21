@@ -64,8 +64,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     Selector_List* selector = dynamic_cast<Selector_List*>(node);
     cerr << ind << "Selector_List " << selector;
     cerr << " (" << pstate_source_position(node) << ")";
-    cerr << " [block:" << selector->last_block() << "]";
-    // cerr << ((selector->last_block() && selector->last_block()->is_root()) ? " [root]" : "");
     cerr << " [@media:" << selector->media_block() << "]";
     cerr << (selector->is_optional() ? " [is_optional]": " -");
     cerr << (selector->has_line_break() ? " [line-break]": " -");
@@ -81,6 +79,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
   } else if (dynamic_cast<Parent_Selector*>(node)) {
     Parent_Selector* selector = dynamic_cast<Parent_Selector*>(node);
     cerr << ind << "Parent_Selector " << selector;
+    if (selector->not_selector()) cerr << " [in_declaration]";
     cerr << " (" << pstate_source_position(node) << ")";
     cerr << " <" << prettyprint(selector->pstate().token.ws_before()) << ">" << endl;
 //    debug_ast(selector->selector(), ind + "->", env);
@@ -89,9 +88,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     Complex_Selector* selector = dynamic_cast<Complex_Selector*>(node);
     cerr << ind << "Complex_Selector " << selector
       << " (" << pstate_source_position(node) << ")"
-      << " [block:" << selector->last_block() << "]"
       << " [weight:" << longToHex(selector->specificity()) << "]"
-      << (selector->last_block() && selector->last_block()->is_root() ? " [root]" : "")
       << " [@media:" << selector->media_block() << "]"
       << (selector->is_optional() ? " [is_optional]": " -")
       << (selector->has_line_break() ? " [line-break]": " -")
@@ -109,9 +106,7 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     Compound_Selector* selector = dynamic_cast<Compound_Selector*>(node);
     cerr << ind << "Compound_Selector " << selector;
     cerr << " (" << pstate_source_position(node) << ")";
-    cerr << " [block:" << selector->last_block() << "]";
     cerr << " [weight:" << longToHex(selector->specificity()) << "]";
-    // cerr << (selector->last_block() && selector->last_block()->is_root() ? " [root]" : "");
     cerr << " [@media:" << selector->media_block() << "]";
     cerr << (selector->is_optional() ? " [is_optional]": " -");
     cerr << (selector->has_line_break() ? " [line-break]": " -");
@@ -157,7 +152,6 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
 
     Selector_Placeholder* selector = dynamic_cast<Selector_Placeholder*>(node);
     cerr << ind << "Selector_Placeholder [" << selector->name() << "] " << selector
-      << " [block:" << selector->last_block() << "]"
       << " [@media:" << selector->media_block() << "]"
       << (selector->is_optional() ? " [is_optional]": " -")
       << (selector->has_line_break() ? " [line-break]": " -")
@@ -173,9 +167,8 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
   } else if (dynamic_cast<Selector_Schema*>(node)) {
     Selector_Schema* selector = dynamic_cast<Selector_Schema*>(node);
     cerr << ind << "Selector_Schema " << selector;
-    cerr << " (" << pstate_source_position(node) << ")";
-    cerr << " [block:" << selector->last_block() << "]"
-      << (selector->last_block() && selector->last_block()->is_root() ? " [root]" : "")
+    cerr << " (" << pstate_source_position(node) << ")"
+      << (selector->at_root() && selector->at_root() ? " [@ROOT]" : "")
       << " [@media:" << selector->media_block() << "]"
       << (selector->has_line_break() ? " [line-break]": " -")
       << (selector->has_line_feed() ? " [line-feed]": " -")
@@ -355,18 +348,19 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
     cerr << " [" <<  block->name() << "]" << endl;
     debug_ast(block->arguments(), ind + " args: ");
     if (block->block()) for(auto i : block->block()->elements()) { debug_ast(i, ind + " ", env); }
-  } else if (dynamic_cast<Ruleset*>(node)) {
-    Ruleset* ruleset = dynamic_cast<Ruleset*>(node);
+  } else if (Ruleset* ruleset = dynamic_cast<Ruleset*>(node)) {
     cerr << ind << "Ruleset " << ruleset;
     cerr << " (" << pstate_source_position(node) << ")";
-    cerr << " " << ruleset->tabs() << endl;
-    debug_ast(ruleset->selector(), ind + " ");
-    if (ruleset->block()) for(auto i : ruleset->block()->elements()) { debug_ast(i, ind + " ", env); }
+    cerr << " [indent: " << ruleset->tabs() << "]";
+    cerr << (ruleset->at_root() ? " [@ROOT]" : "");
+    cerr << endl;
+    debug_ast(ruleset->selector(), ind + ">");
+    if (ruleset->block()) for(auto i : ruleset->block()->elements()) { debug_ast(i, ind + "|", env); }
   } else if (dynamic_cast<Block*>(node)) {
     Block* block = dynamic_cast<Block*>(node);
     cerr << ind << "Block " << block;
     cerr << " (" << pstate_source_position(node) << ")";
-    cerr << " " << block->tabs() << endl;
+    cerr << " [indent: " << block->tabs() << "]" << endl;
     for(auto i : block->elements()) { debug_ast(i, ind + " ", env); }
   } else if (dynamic_cast<Textual*>(node)) {
     Textual* expression = dynamic_cast<Textual*>(node);

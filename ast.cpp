@@ -246,7 +246,7 @@ namespace Sass {
         Selector* lhs = (*this)[i];
         // very special case for wrapped matches selector
         if (Wrapped_Selector* wrapped = dynamic_cast<Wrapped_Selector*>(lhs)) {
-          if (wrapped->name() == ":matches(" || wrapped->name() == ":-moz-any(") {
+          if (wrapped->name() == ":matches" || wrapped->name() == ":-moz-any") {
             if (Selector_List* list = dynamic_cast<Selector_List*>(wrapped->selector())) {
               if (Compound_Selector* comp = dynamic_cast<Compound_Selector*>(rhs)) {
                 if (list->is_superselector_of(comp)) return true;
@@ -440,7 +440,6 @@ namespace Sass {
     if (!head()) return tail()->context(ctx);
     Complex_Selector* cpy = new (ctx.mem) Complex_Selector(pstate(), combinator(), head(), tail()->context(ctx));
     cpy->media_block(media_block());
-    cpy->last_block(last_block());
     return cpy;
   }
 
@@ -503,6 +502,20 @@ namespace Sass {
   {
     return 0;
   }*/
+
+  // remove parent selector references
+  // basically unwraps parsed selectors
+  void Selector_List::remove_parent_selectors()
+  {
+    // Check every rhs selector against left hand list
+    for(size_t i = 0, L = length(); i < L; ++i) {
+      if (!(*this)[i]->head()) continue;
+      if ((*this)[i]->combinator() != Complex_Selector::ANCESTOR_OF) continue;
+      if ((*this)[i]->head()->is_empty_reference()) {
+        (*this)[i] = (*this)[i]->tail();
+      }
+    }
+  }
 
   void Selector_List::adjust_after_pushing(Complex_Selector* c)
   {

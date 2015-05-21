@@ -132,6 +132,12 @@ SOURCES = \
 	emitter.cpp \
 	output.cpp \
 	parser.cpp \
+	parser_feature.cpp \
+	parser_functions.cpp \
+	parser_media.cpp \
+	parser_scss.cpp \
+	parser_selectors.cpp \
+	parser_values.cpp \
 	plugins.cpp \
 	position.cpp \
 	prelexer.cpp \

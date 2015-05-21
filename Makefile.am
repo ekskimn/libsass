@@ -61,6 +61,12 @@ libsass_la_SOURCES = \
 	emitter.cpp emitter.hpp \
 	output.cpp output.hpp \
 	parser.cpp parser.hpp \
+	parser_feature.cpp \
+	parser_functions.cpp \
+	parser_media.cpp \
+	parser_scss.cpp \
+	parser_selectors.cpp \
+	parser_values.cpp \
 	plugins.cpp plugins.hpp \
 	prelexer.cpp prelexer.hpp \
 	remove_placeholders.cpp remove_placeholders.hpp \
