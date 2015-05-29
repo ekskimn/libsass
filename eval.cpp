@@ -18,6 +18,7 @@
 #include "to_c.hpp"
 #include "context.hpp"
 #include "backtrace.hpp"
+#include "lexer.hpp"
 #include "prelexer.hpp"
 #include "parser.hpp"
 #include "expand.hpp"
@@ -489,6 +490,17 @@ namespace Sass {
     {
       // rhs->set_delayed(false);
       // rhs = rhs->perform(this);
+    }
+
+    // upgrade string to number if possible (issue #948)
+    if (op_type == Binary_Expression::DIV || op_type == Binary_Expression::MUL) {
+      if (String_Constant* str = dynamic_cast<String_Constant*>(rhs)) {
+        const char* start = str->value().c_str();
+        if (Prelexer::sequence < Prelexer::number >(start) != 0) {
+          rhs = new (ctx.mem) Textual(rhs->pstate(), Textual::DIMENSION, str->value());
+          rhs->is_delayed(false); rhs = rhs->perform(this);
+        }
+      }
     }
 
     // see if it's a relational expression

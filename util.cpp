@@ -6,7 +6,9 @@
 #include <stdint.h>
 #include "ast.hpp"
 #include "util.hpp"
+#include "lexer.hpp"
 #include "prelexer.hpp"
+#include "constants.hpp"
 #include "utf8/checked.h"
 
 namespace Sass {
@@ -462,12 +464,25 @@ namespace Sass {
 
   bool peek_linefeed(const char* start)
   {
-    while (*start) {
-      if (*start == '\n' || *start == '\r') return true;
-      if (*start != ' ' && *start != '\t') return false;
-      ++ start;
-    }
-    return false;
+    using namespace Prelexer;
+    using namespace Constants;
+    return sequence <
+             zero_plus <
+               alternatives <
+                 exactly <' '>,
+                 exactly <'\t'>,
+                 delimited_by <
+                   slash_star,
+                   star_slash,
+                   false
+                 >
+               >
+             >,
+             alternatives <
+               exactly <'\n'>,
+               exactly <'\r'>
+             >
+           >(start) != 0;
   }
 
   namespace Util {

@@ -151,8 +151,7 @@ namespace Sass {
             // skip escapes
             sequence <
               exactly < '\\' >,
-              exactly < '\r' >,
-              exactly < '\n' >
+              re_linebreak
             >,
             escape_seq,
             // skip interpolants
@@ -175,8 +174,7 @@ namespace Sass {
             // skip escapes
             sequence <
               exactly < '\\' >,
-              exactly < '\r' >,
-              exactly < '\n' >
+              re_linebreak
             >,
             escape_seq,
             // skip interpolants

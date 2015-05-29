@@ -103,9 +103,11 @@ namespace Sass {
         // consume everything up and including the comma speparator
         reloop = lex< sequence < optional_css_comments, exactly<','> > >() != 0;
         // remember line break (also between some commas)
+        if (!sel->is_delayed()) {
         if (peek_newline()) sel->has_line_feed(true);
         if (sel->tail() && peek_newline()) sel->tail()->has_line_feed(true);
         if (sel->tail() && sel->tail()->head() && peek_newline()) sel->tail()->head()->has_line_feed(true);
+        }
         // remember line break (also between some commas)
       }
       (*group) << sel;
@@ -172,7 +174,7 @@ namespace Sass {
       // otherwise we need to create a new complex selector and set the old one as its tail
       else { sel = new (mem) Complex_Selector(pstate, Complex_Selector::ANCESTOR_OF, head, sel); }
       // peek for linefeed and remember result on head
-      if (peek_newline()) head->has_line_break(true);
+      // if (peek_newline()) head->has_line_break(true);
     }
 
     // complex selector
