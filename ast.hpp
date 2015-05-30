@@ -1724,6 +1724,7 @@ namespace Sass {
     { }
     virtual ~Simple_Selector() = 0;
     virtual Compound_Selector* unify_with(Compound_Selector*, Context&);
+    virtual bool has_parent_ref() { return false; };
     virtual bool is_pseudo_element() { return false; }
     virtual bool is_pseudo_class() { return false; }
 
@@ -1747,6 +1748,7 @@ namespace Sass {
     Parent_Selector(ParserState pstate, Selector* r = 0, bool not_selector = false)
     : Simple_Selector(pstate), not_selector_(not_selector) // , selector_(r)
     { has_reference(true); }
+    virtual bool has_parent_ref() { return true; };
     virtual unsigned long specificity()
     {
       return 0;
@@ -1914,6 +1916,7 @@ namespace Sass {
   class Compound_Selector : public Selector, public Vectorized<Simple_Selector*> {
   private:
     SourcesSet sources_;
+    ADD_PROPERTY(bool, has_parent_reference);
   protected:
     void adjust_after_pushing(Simple_Selector* s)
     {
@@ -1923,11 +1926,13 @@ namespace Sass {
   public:
     Compound_Selector(ParserState pstate, size_t s = 0)
     : Selector(pstate),
-      Vectorized<Simple_Selector*>(s)
+      Vectorized<Simple_Selector*>(s),
+      has_parent_reference_(false)
     { }
 
     Compound_Selector* unify_with(Compound_Selector* rhs, Context& ctx);
     // virtual Selector_Placeholder* find_placeholder();
+    virtual bool has_parent_ref();
     Simple_Selector* base()
     {
       // Implement non-const in terms of const. Safe to const_cast since this method is non-const
@@ -1992,6 +1997,7 @@ namespace Sass {
       if ((h && h->has_reference())   || (t && t->has_reference()))   has_reference(true);
       if ((h && h->has_placeholder()) || (t && t->has_placeholder())) has_placeholder(true);
     }
+    virtual bool has_parent_ref();
     Compound_Selector* base();
     Complex_Selector* context(Context&);
     Complex_Selector* innermost();

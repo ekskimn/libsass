@@ -84,19 +84,36 @@ namespace Sass {
   {
   	// cerr << "parse sel list " << at_root << endl;
     bool reloop = true;
+    bool had_linefeed = false;
     To_String to_string(&ctx);
     Selector_List* group = new (mem) Selector_List(pstate);
     group->media_block(last_media_block);
     do {
       reloop = false;
-      lex< css_comments >();
-      if (peek< class_char < selector_list_delims > >())
+
+      if (peek_css< class_char < selector_list_delims > >())
         break; // in case there are superfluous commas at the end
 
       bool in_root = in_at_root || at_root;
 
+      bool has_line_feed = peek_newline() || had_linefeed;
+
+      had_linefeed = false;
       // now parse the complex selector
+      lex< css_comments >();
       Complex_Selector* sel = parse_complex_selector(in_root);
+      bool has_line_break = peek_newline();
+
+        if (!sel->is_delayed()) {
+      sel->has_line_feed(has_line_feed);
+      // sel->has_line_break(has_line_break);
+      if (sel->tail()) sel->tail()->has_line_feed(has_line_feed);
+      if (sel->tail() && sel->tail()->head()) sel->tail()->head()->has_line_feed(has_line_feed);
+}
+      // if (sel->tail()) sel->tail()->has_line_break(has_line_break);
+
+      // if (sel->tail()) sel->tail()->head()->has_line_feed(has_line_feed);
+      // if (sel->tail()) sel->tail()->head()->has_line_break(has_line_break);
 
       while (peek_css< exactly<','> >())
       {
@@ -106,9 +123,10 @@ namespace Sass {
         reloop = lex< exactly<','> >() != 0;
         // remember line break (also between some commas)
         if (!sel->is_delayed()) {
-        if (peek_newline()) sel->has_line_feed(true);
-        if (sel->tail() && peek_newline()) sel->tail()->has_line_feed(true);
-        if (sel->tail() && sel->tail()->head() && peek_newline()) sel->tail()->head()->has_line_feed(true);
+        had_linefeed = had_linefeed || peek_newline();
+        // if (peek_newline()) sel->has_line_feed(true);
+        // if (sel->tail() && peek_newline()) sel->tail()->has_line_feed(true);
+        // if (sel->tail() && sel->tail()->head() && peek_newline()) sel->tail()->head()->has_line_feed(true);
         }
         // remember line break (also between some commas)
       }
@@ -176,7 +194,7 @@ namespace Sass {
       // otherwise we need to create a new complex selector and set the old one as its tail
       else { sel = new (mem) Complex_Selector(pstate, Complex_Selector::ANCESTOR_OF, head, sel); }
       // peek for linefeed and remember result on head
-      if (peek_newline()) head->has_line_break(true);
+      // if (peek_newline()) head->has_line_break(true);
     }
 
     // complex selector
@@ -212,6 +230,7 @@ namespace Sass {
       // parse parent selector
       else if (lex< exactly<'&'> >(false))
       {
+        seq->has_parent_reference(true);
         (*seq) << new (mem) Parent_Selector(pstate);
       }
       // parse type selector

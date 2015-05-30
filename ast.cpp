@@ -18,6 +18,17 @@ namespace Sass {
            const_cast<Compound_Selector&>(rhs).perform(&to_string);
   }
 
+  bool Compound_Selector::has_parent_ref()
+  {
+    return has_parent_reference();
+  }
+
+  bool Complex_Selector::has_parent_ref()
+  {
+    return (head() && head()->has_parent_ref()) ||
+           (tail() && tail()->has_parent_ref());
+  }
+
   bool Complex_Selector::operator<(const Complex_Selector& rhs) const
   {
     To_String to_string;
@@ -121,6 +132,7 @@ namespace Sass {
       return cpy;
     }
     Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
+    cpy->has_parent_reference(rhs->has_parent_reference());
     for (size_t j = 0; j < i; ++j)
     { (*cpy) << (*rhs)[j]; }
     (*cpy) << this;
@@ -136,6 +148,7 @@ namespace Sass {
     // if the rhs is empty, just return a copy of this
     if (rhs->length() == 0) {
       Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
+      cpy->has_parent_reference(rhs->has_parent_reference());
       (*cpy) << this;
       return cpy;
     }
@@ -153,6 +166,7 @@ namespace Sass {
       if (static_cast<Type_Selector*>(rhs_0)->name() == "*")
       {
         Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
+        cpy->has_parent_reference(rhs->has_parent_reference());
         (*cpy) << this;
         for (size_t i = 1, L = rhs->length(); i < L; ++i)
         { (*cpy) << (*rhs)[i]; }
@@ -167,6 +181,7 @@ namespace Sass {
     }
     // else it's a tag name and a bunch of qualifiers -- just append them
     Compound_Selector* cpy = new (ctx.mem) Compound_Selector(rhs->pstate());
+    cpy->has_parent_reference(rhs->has_parent_reference());
     (*cpy) << this;
     (*cpy) += rhs;
     return cpy;
@@ -585,6 +600,7 @@ namespace Sass {
   {
     To_String to_string(&ctx);
     Compound_Selector* result = new (ctx.mem) Compound_Selector(pstate());
+    result->has_parent_reference(has_parent_reference());
 
     // not very efficient because it needs to preserve order
     for (size_t i = 0, L = length(); i < L; ++i)

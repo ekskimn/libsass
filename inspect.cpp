@@ -930,9 +930,11 @@ namespace Sass {
       (*g)[i]->perform(this);
       if (i < L - 1) {
         append_comma_separator();
-        if ((*g)[i]->has_line_feed()) {
-          append_optional_linefeed();
-          append_indentation();
+        if ((*g)[i+1]->has_line_feed()) {
+          if (!((*g)[i+1]->has_parent_ref())) {
+            append_optional_linefeed();
+            append_indentation();
+          }
         }
       }
     }

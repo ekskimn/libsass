@@ -1472,6 +1472,7 @@ string qwe = sel ? sel->perform(&to_string) : "";
     Compound_Selector* ss = new (ctx.mem) Compound_Selector(s->pstate(), s->length());
     ss->media_block(s->media_block());
     ss->has_line_break(s->has_line_break());
+    ss->has_parent_reference(s->has_parent_reference());
     for (size_t i = 0, L = s->length(); i < L; ++i) {
       Simple_Selector* simp = static_cast<Simple_Selector*>((*s)[i]->perform(this));
       if (simp) *ss << simp;
