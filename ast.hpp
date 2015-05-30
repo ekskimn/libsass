@@ -260,7 +260,7 @@ namespace Sass {
       RULESET,
       MEDIA,
       DIRECTIVE,
-      FEATURE,
+      SUPPORTS,
       ATROOT,
       BUBBLE,
       KEYFRAMERULE
@@ -388,16 +388,15 @@ namespace Sass {
     ATTACH_OPERATIONS();
   };
 
-  ///////////////////
-  // Feature queries.
-  ///////////////////
-  class Feature_Block : public Has_Block {
-    ADD_PROPERTY(Feature_Query*, feature_queries);
-    ADD_PROPERTY(Selector*, selector);
+  //////////////////
+  // Query features.
+  //////////////////
+  class Supports_Block : public Has_Block {
+    ADD_PROPERTY(Supports_Query*, queries);
   public:
-    Feature_Block(ParserState pstate, Feature_Query* fqs, Block* b)
-    : Has_Block(pstate, b), feature_queries_(fqs), selector_(0)
-    { statement_type(FEATURE); }
+    Supports_Block(ParserState pstate, Supports_Query* queries = 0, Block* block = 0)
+    : Has_Block(pstate, block), queries_(queries)
+    { statement_type(SUPPORTS); }
     bool is_hoistable() { return true; }
     bool bubbles() { return true; }
     ATTACH_OPERATIONS();
@@ -1458,10 +1457,10 @@ namespace Sass {
   ///////////////////
   // Feature queries.
   ///////////////////
-  class Feature_Query : public Expression, public Vectorized<Feature_Query_Condition*> {
+  class Supports_Query : public Expression, public Vectorized<Supports_Condition*> {
   public:
-    Feature_Query(ParserState pstate, size_t s = 0)
-    : Expression(pstate), Vectorized<Feature_Query_Condition*>(s)
+    Supports_Query(ParserState pstate, size_t s = 0)
+    : Expression(pstate), Vectorized<Supports_Condition*>(s)
     { }
     ATTACH_OPERATIONS();
   };
@@ -1469,7 +1468,7 @@ namespace Sass {
   ////////////////////////////////////////////////////////
   // Feature expressions (for use inside feature queries).
   ////////////////////////////////////////////////////////
-  class Feature_Query_Condition : public Expression, public Vectorized<Feature_Query_Condition*> {
+  class Supports_Condition : public Expression, public Vectorized<Supports_Condition*> {
   public:
     enum Operand { NONE, AND, OR, NOT };
   private:
@@ -1478,9 +1477,9 @@ namespace Sass {
     ADD_PROPERTY(Operand, operand);
     ADD_PROPERTY(bool, is_root);
   public:
-    Feature_Query_Condition(ParserState pstate, size_t s = 0, String* f = 0,
+    Supports_Condition(ParserState pstate, size_t s = 0, String* f = 0,
                             Expression* v = 0, Operand o = NONE, bool r = false)
-    : Expression(pstate), Vectorized<Feature_Query_Condition*>(s),
+    : Expression(pstate), Vectorized<Supports_Condition*>(s),
       feature_(f), value_(v), operand_(o), is_root_(r)
     { }
     ATTACH_OPERATIONS();
@@ -1553,7 +1552,7 @@ namespace Sass {
       {
         return expression()->exclude("rule");
       }
-      if (s->statement_type() == Statement::FEATURE)
+      if (s->statement_type() == Statement::SUPPORTS)
       {
         return expression()->exclude("supports");
       }

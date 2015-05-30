@@ -238,7 +238,7 @@ namespace Sass {
       return word<media_kwd>(src);
     }
 
-    const char* kwd_supports(const char* src) {
+    const char* kwd_supports_directive(const char* src) {
       return word<supports_kwd>(src);
     }
 

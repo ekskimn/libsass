@@ -265,9 +265,9 @@ namespace Sass {
     List* parse_media_queries();
     Media_Query* parse_media_query();
     Media_Query_Expression* parse_media_expression();
-    Feature_Block* parse_feature_block();
-    Feature_Query* parse_feature_queries();
-    Feature_Query_Condition* parse_feature_query();
+    Supports_Block* parse_supports_directive();
+    Supports_Query* parse_supports_queries();
+    Supports_Condition* parse_supports_query();
     At_Root_Block* parse_at_root_block();
     At_Root_Expression* parse_at_root_expression();
     At_Rule* parse_at_rule();

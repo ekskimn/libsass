@@ -585,20 +585,20 @@ namespace Sass {
 		return false; // isPrintable(e, style);
     }
 
-    bool isPrintable(Feature_Block* f, Output_Style style) {
+    bool isPrintable(Supports_Block* f, Output_Style style) {
       if (f == NULL) {
         return false;
       }
 
       Block* b = f->block();
 
-      bool hasSelectors = f->selector() && static_cast<Selector_List*>(f->selector())->length() > 0;
+//      bool hasSelectors = f->selector() && static_cast<Selector_List*>(f->selector())->length() > 0;
 
       bool hasDeclarations = false;
       bool hasPrintableChildBlocks = false;
       for (size_t i = 0, L = b->length(); i < L; ++i) {
         Statement* stm = (*b)[i];
-        if (!stm->is_hoistable() && f->selector() != NULL && !hasSelectors) {
+        if (!stm->is_hoistable()) {
           // If a statement isn't hoistable, the selectors apply to it. If there are no selectors (a selector list of length 0),
           // then those statements aren't considered printable. That means there was a placeholder that was removed. If the selector
           // is NULL, then that means there was never a wrapping selector and it is printable (think of a top level media block with
@@ -678,8 +678,8 @@ namespace Sass {
             return true;
           }
         }
-        else if (typeid(*stm) == typeid(Feature_Block)) {
-          Feature_Block* f = (Feature_Block*) stm;
+        else if (typeid(*stm) == typeid(Supports_Block)) {
+          Supports_Block* f = (Supports_Block*) stm;
           if (isPrintable(f, style)) {
             return true;
           }

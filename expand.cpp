@@ -191,13 +191,13 @@ namespace Sass {
     return 0;
   }
 
-  Statement* Expand::operator()(Feature_Block* f)
+  Statement* Expand::operator()(Supports_Block* f)
   {
-    Expression* feature_queries = f->feature_queries()->perform(&eval);
-    Feature_Block* ff = new (ctx.mem) Feature_Block(f->pstate(),
-                                                    static_cast<Feature_Query*>(feature_queries),
+    Expression* queries = f->queries()->perform(&eval);
+    Supports_Block* ff = new (ctx.mem) Supports_Block(f->pstate(),
+                                                    static_cast<Supports_Query*>(queries),
                                                     f->block()->perform(this)->block());
-    ff->selector(selector());
+    // ff->selector(selector());
     return ff;
   }
 

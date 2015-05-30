@@ -970,29 +970,29 @@ string qwe = sel ? sel->perform(&to_string) : "";
     return s;
   }
 
-  Expression* Eval::operator()(Feature_Query* q)
+  Expression* Eval::operator()(Supports_Query* q)
   {
-    Feature_Query* qq = new (ctx.mem) Feature_Query(q->pstate(),
+    Supports_Query* qq = new (ctx.mem) Supports_Query(q->pstate(),
                                                     q->length());
     for (size_t i = 0, L = q->length(); i < L; ++i) {
-      *qq << static_cast<Feature_Query_Condition*>((*q)[i]->perform(this));
+      *qq << static_cast<Supports_Condition*>((*q)[i]->perform(this));
     }
     return qq;
   }
 
-  Expression* Eval::operator()(Feature_Query_Condition* c)
+  Expression* Eval::operator()(Supports_Condition* c)
   {
     String* feature = c->feature();
     Expression* value = c->value();
     value = (value ? value->perform(this) : 0);
-    Feature_Query_Condition* cc = new (ctx.mem) Feature_Query_Condition(c->pstate(),
+    Supports_Condition* cc = new (ctx.mem) Supports_Condition(c->pstate(),
                                                  c->length(),
                                                  feature,
                                                  value,
                                                  c->operand(),
                                                  c->is_root());
     for (size_t i = 0, L = c->length(); i < L; ++i) {
-      *cc << static_cast<Feature_Query_Condition*>((*c)[i]->perform(this));
+      *cc << static_cast<Supports_Condition*>((*c)[i]->perform(this));
     }
     return cc;
   }

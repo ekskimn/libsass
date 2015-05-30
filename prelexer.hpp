@@ -215,7 +215,7 @@ namespace Sass {
     const char* kwd_with_directive(const char* src);
     const char* kwd_without_directive(const char* src);
     const char* kwd_media(const char* src);
-    const char* kwd_supports(const char* src);
+    const char* kwd_supports_directive(const char* src);
     // const char* keyframes(const char* src);
     // const char* keyf(const char* src);
     const char* kwd_mixin(const char* src);

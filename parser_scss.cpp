@@ -119,7 +119,8 @@ namespace Sass {
     else if (lex < kwd_each_directive >(true)) { (*block) << parse_each_directive(); }
     else if (lex < kwd_while_directive >(true)) { (*block) << parse_while_directive(); }
     else if (lex < kwd_return_directive >(true)) { (*block) << parse_return_directive(); }
-    else if (lex < kwd_supports >(true)) { (*block) << parse_feature_block(); }
+    else if (lex < kwd_supports_directive >(true)) { (*block) << parse_supports_directive(); }
+
     else if (lex < variable >(true)) { (*block) << parse_assignment(); }
     else if (lex < kwd_warn >(true)) { (*block) << parse_warning(); }
     else if (lex < kwd_err >(true)) { (*block) << parse_error(); }
@@ -238,7 +239,7 @@ namespace Sass {
         sel = parse_selector_list();
       }
     }
-    else if (!(peek<exactly<'{'> >() || peek<exactly<'}'> >() || peek<exactly<';'> >())) {
+    else if (!(peek < alternatives < exactly<'{'>, exactly<'}'>, exactly<';'> > >())) {
       val = parse_list();
     }
     Block* body = 0;

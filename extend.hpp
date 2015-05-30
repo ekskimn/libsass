@@ -32,7 +32,7 @@ namespace Sass {
 
     void operator()(Block*);
     void operator()(Ruleset*);
-    void operator()(Feature_Block*);
+    void operator()(Supports_Block*);
     void operator()(Media_Block*);
     void operator()(At_Rule*);
 

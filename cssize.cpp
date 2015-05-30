@@ -161,7 +161,7 @@ namespace Sass {
     return debubble(mm->block(), mm)->block();
   }
 
-  Statement* Cssize::operator()(Feature_Block* m)
+  Statement* Cssize::operator()(Supports_Block* m)
   {
     if (!m->block()->length())
     { return m; }
@@ -171,8 +171,8 @@ namespace Sass {
 
     p_stack.push_back(m);
 
-    Feature_Block* mm = new (ctx.mem) Feature_Block(m->pstate(),
-                                                    m->feature_queries(),
+    Supports_Block* mm = new (ctx.mem) Supports_Block(m->pstate(),
+                                                    m->queries(),
                                                     m->block()->perform(this)->block());
     mm->tabs(m->tabs());
 
@@ -253,7 +253,7 @@ namespace Sass {
     return bubble;
   }
 
-  Statement* Cssize::bubble(Feature_Block* m)
+  Statement* Cssize::bubble(Supports_Block* m)
   {
     Ruleset* parent = static_cast<Ruleset*>(shallow_copy(this->parent()));
 
@@ -269,8 +269,8 @@ namespace Sass {
 
     Block* wrapper_block = new (ctx.mem) Block(m->block()->pstate());
     *wrapper_block << new_rule;
-    Feature_Block* mm = new (ctx.mem) Feature_Block(m->pstate(),
-                                                    m->feature_queries(),
+    Supports_Block* mm = new (ctx.mem) Supports_Block(m->pstate(),
+                                                    m->queries(),
                                                     wrapper_block);
 
     mm->tabs(m->tabs());
@@ -365,8 +365,8 @@ namespace Sass {
         return new (ctx.mem) Bubble(*static_cast<Bubble*>(s));
       case Statement::DIRECTIVE:
         return new (ctx.mem) At_Rule(*static_cast<At_Rule*>(s));
-      case Statement::FEATURE:
-        return new (ctx.mem) Feature_Block(*static_cast<Feature_Block*>(s));
+      case Statement::SUPPORTS:
+        return new (ctx.mem) Supports_Block(*static_cast<Supports_Block*>(s));
       case Statement::ATROOT:
         return new (ctx.mem) At_Root_Block(*static_cast<At_Root_Block*>(s));
       case Statement::KEYFRAMERULE:

@@ -1,81 +1,101 @@
-#include <cstdlib>
-#include <iostream>
-#include <vector>
 #include "parser.hpp"
-#include "file.hpp"
-#include "inspect.hpp"
-#include "to_string.hpp"
-#include "constants.hpp"
-#include "util.hpp"
-#include "prelexer.hpp"
-#include "sass_functions.h"
-
-#include <typeinfo>
 
 namespace Sass {
-  using namespace std;
   using namespace Constants;
 
 
-  Feature_Block* Parser::parse_feature_block()
+  // lexed after `kwd_supports_directive`
+  // these are very similar to media blocks
+  Supports_Block* Parser::parse_supports_directive()
   {
-    ParserState supports_source_position = pstate;
-
-    Feature_Query* feature_queries = parse_feature_queries();
-
-    if (!lex< exactly<'{'> >()) {
+    // create the ast node object for the support queries
+    Supports_Block* query = new (mem) Supports_Block(pstate);
+    // now parse the support queries
+    query->queries(parse_supports_queries());
+    // additional block is mandatory
+    if (!lex < exactly <'{'> >()) {
       error("expected '{' in feature query", pstate);
     }
-    Block* block = parse_block();
-
-    return new (mem) Feature_Block(supports_source_position, feature_queries, block);
+    // parse inner block
+    query->block(parse_block());
+    // return ast node
+    return query;
   }
 
-  Feature_Query* Parser::parse_feature_queries()
+
+  // parse multiple queries for supports blocks
+  // these are very similar to media queries
+  Supports_Query* Parser::parse_supports_queries()
   {
-    Feature_Query* fq = new (mem) Feature_Query(pstate);
-    Feature_Query_Condition* cond = new (mem) Feature_Query_Condition(pstate);
+    // lex optional comments
+    lex < css_whitespace >();
+    // create wrapper object and root condition
+    Supports_Query* sq = new (mem) Supports_Query(pstate);
+    Supports_Condition* cond = new (mem) Supports_Condition(pstate);
+    // first condition is the root
     cond->is_root(true);
-    while (!peek< exactly<')'> >(position) && !peek< exactly<'{'> >(position))
-      (*cond) << parse_feature_query();
-    (*fq) << cond;
-
-    if (fq->empty()) error("expected @supports condition (e.g. (display: flexbox))", pstate);
-
-    return fq;
+    // loop until the abort condition
+    while (!peek < exactly <'{'> >())
+      (*cond) << parse_supports_query();
+    // add condition
+    (*sq) << cond;
+    // at least one query is mandatory (ToDo: check for ruby sass compat)
+    if (sq->empty()) error("expected @supports condition (e.g. (display: flexbox))", pstate);
+    if (!peek_css < exactly <'{'> >()) error("expected \"{\" after @supports declaration", pstate);
+    // return ast node
+    return sq;
   }
+  // EO parse_supports_queries
 
-  Feature_Query_Condition* Parser::parse_feature_query()
+
+  // parse one query operation
+  // may encounter nested queries
+  Supports_Condition* Parser::parse_supports_query()
   {
-    Feature_Query_Condition* cond = 0;
-    if (lex< kwd_not >(position)) {
-      cond = parse_feature_query();
-      cond->operand(Feature_Query_Condition::NOT);
+    Supports_Condition* cond = 0;
+    // lex optional comments
+    lex < css_whitespace >();
+    // parse `not` query operator
+    if (lex < kwd_not >(position)) {
+      cond = parse_supports_query();
+      cond->operand(Supports_Condition::NOT);
     }
-    else if (lex< kwd_and >(position)) {
-      cond = parse_feature_query();
-      cond->operand(Feature_Query_Condition::AND);
+    // parse `and` query operator
+    else if (lex < kwd_and >(position)) {
+      cond = parse_supports_query();
+      cond->operand(Supports_Condition::AND);
     }
-    else if (lex< kwd_or >(position)) {
-      cond = parse_feature_query();
-      cond->operand(Feature_Query_Condition::OR);
+    // parse `or` query operator
+    else if (lex < kwd_or >(position)) {
+      cond = parse_supports_query();
+      cond->operand(Supports_Condition::OR);
     }
-    else if (lex< exactly<'('> >(position)) {
-      cond = new (mem) Feature_Query_Condition(pstate);
-      while (!peek< exactly<')'> >(position) && !peek< exactly<'{'> >(position))
-        (*cond) << parse_feature_query();
-      if (!lex< exactly<')'> >()) error("unclosed parenthesis in @supports declaration", pstate);
+    // parse another list with queries
+    else if (lex < exactly <'('> >()) {
+      // create the inner (parenthesis) condition
+      cond = new (mem) Supports_Condition(pstate);
+      // parse inner supports queries recursively
+      while (!peek < exactly <')'> >())
+        (*cond) << parse_supports_query();
+      // at least one query is mandatory (ToDo: check for ruby sass compat)
+      if (cond->empty()) error("expected @supports condition (e.g. (display: flexbox))", pstate);
+      // the parenthesis closer is mandatory (ToDo: check for ruby sass compat)
+      if (!lex_css < exactly <')'> >()) error("unclosed parenthesis in @supports declaration", pstate);
+      // if we have just one query, we do not wrap it
       cond = (cond->length() == 1) ? (*cond)[0] : cond;
     }
     else {
+      // or parse something declaration like
       Declaration* declaration = parse_declaration();
-      cond = new (mem) Feature_Query_Condition(declaration->pstate(),
-                                               1,
-                                               declaration->property(),
-                                               declaration->value());
+      cond = new (mem) Supports_Condition(declaration->pstate(),
+                                          1,
+                                          declaration->property(),
+                                          declaration->value());
+      // ToDo: maybe we need an addition error condition?
     }
     return cond;
   }
+  // EO parse_supports_query
 
 }
 

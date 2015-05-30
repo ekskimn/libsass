@@ -1988,11 +1988,11 @@ namespace Sass {
     pRuleset->block()->perform(this);
   }
 
-  void Extend::operator()(Feature_Block* pFeatureBlock)
+  void Extend::operator()(Supports_Block* pFeatureBlock)
   {
-    if (pFeatureBlock->selector()) {
-      extendObjectWithSelectorAndBlock(pFeatureBlock, ctx, subset_map);
-    }
+//    if (pFeatureBlock->selector()) {
+//      extendObjectWithSelectorAndBlock(pFeatureBlock, ctx, subset_map);
+//    }
 
     pFeatureBlock->block()->perform(this);
   }

@@ -196,11 +196,11 @@ namespace Sass {
     append_scope_closer();
   }
 
-  void Output::operator()(Feature_Block* f)
+  void Output::operator()(Supports_Block* f)
   {
     if (f->is_invisible()) return;
 
-    Feature_Query* q    = f->feature_queries();
+    Supports_Query* q    = f->queries();
     Block* b            = f->block();
 
     // Filter out feature blocks that aren't printable (process its children though)
@@ -221,10 +221,10 @@ namespace Sass {
     q->perform(this);
     append_scope_opener();
 
-    Selector* e = f->selector();
-    if (e && b->has_non_hoistable()) {
+    // Selector* e = f->selector();
+    if (b->has_non_hoistable()) {
       // JMA - hoisted, output the non-hoistable in a nested block, followed by the hoistable
-      e->perform(this);
+      // e->perform(this);
       append_scope_opener();
 
       for (size_t i = 0, L = b->length(); i < L; ++i) {
