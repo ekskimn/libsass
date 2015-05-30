@@ -883,6 +883,14 @@ namespace Sass {
     Compound_Selector*           head = c->head();
     Complex_Selector*            tail = c->tail();
     Complex_Selector::Combinator comb = c->combinator();
+
+    if (c->has_line_feed()) {
+      if (!(c->has_parent_ref())) {
+        append_optional_linefeed();
+        append_indentation();
+      }
+    }
+
     if (head && !head->is_empty_reference()) head->perform(this);
     bool is_empty = head && head->is_empty_reference();
     bool is_tail = head && !head->is_empty_reference() && tail;
@@ -930,12 +938,14 @@ namespace Sass {
       (*g)[i]->perform(this);
       if (i < L - 1) {
         append_comma_separator();
+/*
         if ((*g)[i+1]->has_line_feed()) {
           if (!((*g)[i+1]->has_parent_ref())) {
             append_optional_linefeed();
             append_indentation();
           }
         }
+*/
       }
     }
   }

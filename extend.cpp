@@ -10,9 +10,20 @@
 #include "parser.hpp"
 #include "node.hpp"
 #include "sass_util.hpp"
+#include "debugger.hpp"
 #include "debug.hpp"
 #include <iostream>
 #include <deque>
+
+inline void debug_extenstion_map(Sass::ExtensionSubsetMap* map, string ind = "")
+{
+  if (ind == "") cerr << "#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+  for(auto const &it : map->values()) {
+    debug_ast(it.first, ind + "first: ");
+    debug_ast(it.second, ind + "second: ");
+  }
+  if (ind == "") cerr << "#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+}
 
 /*
  NOTES:
@@ -271,6 +282,7 @@ namespace Sass {
 
     for (ComplexSelectorDeque::const_iterator iter = deque.begin(), iterEnd = deque.end(); iter != iterEnd; iter++) {
       Complex_Selector* pChild = *iter;
+      // cerr << "complexSelectorToNode AA\n";
       result.collection()->push_back(complexSelectorToNode(pChild, ctx));
     }
 
@@ -506,6 +518,7 @@ namespace Sass {
       DEBUG_PRINTLN(TRIM, "SEQS1: " << seqs1 << " " << toTrimIndex)
 
       Node tempResult = Node::createCollection();
+      tempResult.got_line_feed = seqs1.got_line_feed;
 
       for (NodeDeque::iterator seqs1Iter = seqs1.collection()->begin(), seqs1EndIter = seqs1.collection()->end(); seqs1Iter != seqs1EndIter; ++seqs1Iter) {
         Node& seq1 = *seqs1Iter;
@@ -1286,7 +1299,6 @@ namespace Sass {
 
     DEBUG_PRINTLN(SUBWEAVE, "FLATTENED: " << pathsResult)
 
-
     /*
       TODO: implement
       rejected = mapped.reject {|p| path_has_two_subjects?(p)}
@@ -1409,8 +1421,11 @@ namespace Sass {
 
     Node afters = Node::createCollection();
     afters.plus(path);
+//    debug_node(&afters);
+//    cerr << "DO CLONE\n";
 
     while (!afters.collection()->empty()) {
+//    	cerr << "DO CLONE\n";
       Node current = afters.collection()->front().clone(ctx);
       afters.collection()->pop_front();
       DEBUG_PRINTLN(WEAVE, "CURRENT: " << current)
@@ -1491,9 +1506,12 @@ namespace Sass {
     ExtensionSubsetMap& subsetMap,
     set<Compound_Selector> seen) {
 
+//    cerr << "extendCompoundSelector\n";
+
     DEBUG_EXEC(EXTEND_COMPOUND, printCompoundSelector(pSelector, "EXTEND COMPOUND: "))
 
     Node extendedSelectors = Node::createCollection();
+    // extendedSelectors.got_line_feed = true;
 
     To_String to_string;
 
@@ -1539,6 +1557,7 @@ namespace Sass {
 
 
       Complex_Selector* pExtComplexSelector = &seq;    // The selector up to where the @extend is (ie, the thing to merge)
+      // pExtComplexSelector->has_line_feed(true);
       Compound_Selector* pExtCompoundSelector = pSels; // All the simple selectors to be replaced from the current compound selector from all extensions
 
 
@@ -1582,6 +1601,7 @@ namespace Sass {
       // out and aren't operated on.
       Complex_Selector* pNewSelector = pExtComplexSelector->cloneFully(ctx);
       Complex_Selector* pNewInnerMost = new (ctx.mem) Complex_Selector(pSelector->pstate(), Complex_Selector::ANCESTOR_OF, pUnifiedSelector, NULL);
+      // pNewInnerMost->has_line_feed(pSelector->has_line_feed());
       Complex_Selector::Combinator combinator = pNewSelector->clear_innermost();
       pNewSelector->set_innermost(pNewInnerMost, combinator);
 
@@ -1598,9 +1618,7 @@ namespace Sass {
 #endif
 
 
-      if (pSelector && pSelector->has_line_feed()) pNewSelector->has_line_feed(true);
-
-      // Set the sources on our new Complex_Selector to the sources of this simple sequence plus the thing we're extending.
+      // if (pSelector && pSelector->has_line_feed()) pNewInnerMost->has_line_feed(true);
       DEBUG_PRINTLN(EXTEND_COMPOUND, "SOURCES SETTING ON NEW SEQ: " << complexSelectorToNode(pNewSelector, ctx))
 
       DEBUG_EXEC(EXTEND_COMPOUND, SourcesSet oldSet = pNewSelector->sources(); printSourcesSet(oldSet, ctx, "SOURCES NEW SEQ BEGIN: "))
@@ -1617,7 +1635,7 @@ namespace Sass {
       DEBUG_EXEC(EXTEND_COMPOUND, printSourcesSet(pSelector->sources(), ctx, "SOURCES THIS EXTEND WHICH SHOULD BE SAME STILL: "))
 
 
-
+if (pSels->has_line_feed()) pNewSelector->has_line_feed(true);;
       holder.push_back(make_pair(pSels, pNewSelector));
     }
 
@@ -1753,13 +1771,17 @@ namespace Sass {
     ExtensionSubsetMap& subsetMap,
     set<Compound_Selector> seen) {
 
-    pComplexSelector->tail()->has_line_feed(pComplexSelector->has_line_feed());
-
+    // this one does the messy add (but only one that does something)
+    // pComplexSelector->tail()->has_line_feed(pComplexSelector->has_line_feed());
+      // cerr << "complexSelectorToNode BB\n";
+      // debug_ast(pComplexSelector, "asd: " );
     Node complexSelector = complexSelectorToNode(pComplexSelector, ctx);
+    // complexSelector.got_line_feed = pComplexSelector->has_line_feed();
     DEBUG_PRINTLN(EXTEND_COMPLEX, "EXTEND COMPLEX: " << complexSelector)
 
     Node extendedNotExpanded = Node::createCollection();
-
+    // extendedNotExpanded.got_line_feed = pComplexSelector->has_line_feed();
+// debug_node(&complexSelector, "extendComplexSelector: ");
     for (NodeDeque::iterator complexSelIter = complexSelector.collection()->begin(), complexSelIterEnd = complexSelector.collection()->end(); complexSelIter != complexSelIterEnd; ++complexSelIter) {
       Node& sseqOrOp = *complexSelIter;
 
@@ -1776,17 +1798,18 @@ namespace Sass {
         extendedNotExpanded.collection()->push_back(outer);
         continue;
       }
-
+// cerr << "inner\n";
       Compound_Selector* pCompoundSelector = sseqOrOp.selector()->head();
-
+// debug_extenstion_map(&subsetMap);
       Node extended = extendCompoundSelector(pCompoundSelector, ctx, subsetMap, seen);
-
+      if (sseqOrOp.got_line_feed) extended.got_line_feed = true;
       DEBUG_PRINTLN(EXTEND_COMPLEX, "EXTENDED: " << extended)
 
 
       // Prepend the Compound_Selector based on the choices logic; choices seems to be extend but with an ruby Array instead of a Sequence
       // due to the member mapping: choices = extended.map {|seq| seq.members}
       Complex_Selector* pJustCurrentCompoundSelector = sseqOrOp.selector();
+      // pJustCurrentCompoundSelector->has_line_feed(pComplexSelector->has_line_feed());
 
       bool isSuperselector = false;
       for (NodeDeque::iterator iterator = extended.collection()->begin(), endIterator = extended.collection()->end();
@@ -1800,26 +1823,29 @@ namespace Sass {
       }
 
       if (!isSuperselector) {
+//        cerr << "complexSelectorToNode CC\n";
+        // debug_node(&sseqOrOp);
+        if (sseqOrOp.got_line_feed) pJustCurrentCompoundSelector->has_line_feed(sseqOrOp.got_line_feed);
         extended.collection()->push_front(complexSelectorToNode(pJustCurrentCompoundSelector, ctx));
       }
 
       DEBUG_PRINTLN(EXTEND_COMPLEX, "CHOICES UNSHIFTED: " << extended)
 
+        // pExtensionSelector->has_line_feed(true);
+       // extended.got_line_feed = true;
       // Aggregate our current extensions
       extendedNotExpanded.collection()->push_back(extended);
     }
 
-
     DEBUG_PRINTLN(EXTEND_COMPLEX, "EXTENDED NOT EXPANDED: " << extendedNotExpanded)
 
-
-
+ // debug_node(&extendedNotExpanded, "extendedNotExpanded: ");
     // Ruby Equivalent: paths
     Node paths = Sass::paths(extendedNotExpanded, ctx);
 
     DEBUG_PRINTLN(EXTEND_COMPLEX, "PATHS: " << paths)
 
-
+ // debug_node(&paths, "paths: ");
 
     // Ruby Equivalent: weave
     Node weaves = Node::createCollection();
@@ -1827,9 +1853,9 @@ namespace Sass {
     for (NodeDeque::iterator pathsIter = paths.collection()->begin(), pathsEndIter = paths.collection()->end(); pathsIter != pathsEndIter; ++pathsIter) {
       Node& path = *pathsIter;
       Node weaved = weave(path, ctx);
+      weaved.got_line_feed = path.got_line_feed;
       weaves.collection()->push_back(weaved);
     }
-
     DEBUG_PRINTLN(EXTEND_COMPLEX, "WEAVES: " << weaves)
 
 
@@ -1848,7 +1874,7 @@ namespace Sass {
 
     DEBUG_PRINTLN(EXTEND_COMPLEX, "EXTEND COMPLEX END: " << complexSelector)
 
-
+//cerr << "FIN\n";
     return extendedSelectors;
   }
 
@@ -1881,7 +1907,15 @@ namespace Sass {
       extendedSomething = true;
 
       set<Compound_Selector> seen;
+      // cerr << "DODA\n";
+      // debug_extenstion_map(&subsetMap);
+      // debug_ast(pSelector);
+      // cerr << "DODO\n";
+      // pSelector has line feed, but result does not
       Node extendedSelectors = extendComplexSelector(pSelector, ctx, subsetMap, seen);
+      // cerr << "DEDE\n";
+      // debug_node(&extendedSelectors);
+      // cerr << "DIDI\n";
 
       if (!pSelector->has_placeholder()) {
         if (!extendedSelectors.contains(complexSelectorToNode(pSelector, ctx), true /*simpleSelectorOrderDependent*/)) {

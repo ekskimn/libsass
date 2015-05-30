@@ -1436,6 +1436,7 @@ string qwe = sel ? sel->perform(&to_string) : "";
       ss->media_block(s->media_block());
       for (size_t j = 0, L = s->length(); j < L; ++j) {
         Complex_Selector* comb = static_cast<Complex_Selector*>((*s)[j]->perform(this));
+        // comb->has_line_feed((*s)[j]->has_line_feed());
         if (comb) *ss << comb;
       }
       // debug_ast(ss);
@@ -1447,6 +1448,7 @@ string qwe = sel ? sel->perform(&to_string) : "";
   {
     To_String to_string(&ctx);
     Complex_Selector* ss = new (ctx.mem) Complex_Selector(*s);
+    // ss->has_line_feed(s->has_line_feed());
     ss->media_block(s->media_block());
     Compound_Selector* new_head = 0;
     Complex_Selector* new_tail = 0;
@@ -1460,6 +1462,8 @@ string qwe = sel ? sel->perform(&to_string) : "";
       ss->tail(new_tail);
     }
     if (!ss->head() && ss->combinator() == Complex_Selector::ANCESTOR_OF) {
+      if (ss->tail() && ss->has_line_feed())
+        ss->tail()->has_line_feed(true);
       return ss->tail();
     }
     else {

@@ -539,6 +539,8 @@ namespace Sass {
       for (size_t i = 0, L = extender->length(); i < L; ++i) {
         // let's test this out
         // cerr << "REGISTERING EXTENSION REQUEST: " << (*extender)[i]->perform(&to_string) << " <- " << compound_sel->perform(&to_string) << endl;
+        // debug_ast(c, "reg: ");
+        if (c->has_line_feed()) (*extender)[i]->has_line_feed(true);
         ctx.subset_map.put(compound_sel->to_str_vec(), make_pair((*extender)[i], compound_sel));
       }
     }

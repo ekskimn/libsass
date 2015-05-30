@@ -3,6 +3,7 @@
 
 #include <string>
 #include <sstream>
+#include "node.hpp"
 #include "ast_fwd_decl.hpp"
 
 using namespace std;
@@ -91,8 +92,9 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
       << " [weight:" << longToHex(selector->specificity()) << "]"
       << " [@media:" << selector->media_block() << "]"
       << (selector->is_optional() ? " [is_optional]": " -")
+      << (selector->has_line_feed() ? " [line-feed]": " -")
       << (selector->has_line_break() ? " [line-break]": " -")
-      << (selector->has_line_feed() ? " [line-feed]": " -") << " -> ";
+      << " -- ";
       switch (selector->combinator()) {
         case Complex_Selector::PARENT_OF:   cerr << "{>}"; break;
         case Complex_Selector::PRECEDES:    cerr << "{~}"; break;
@@ -542,6 +544,54 @@ inline void debug_ast(AST_Node* node, string ind = "", Env* env = 0)
   }
 
   if (ind == "") cerr << "####################################################################\n";
+}
+
+inline void debug_node(Node* node, string ind = "")
+{
+  if (ind == "") cerr << "#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n";
+  if (node->isCombinator()) {
+    cerr << ind;
+    cerr << "Combinator ";
+    cerr << node << " ";
+    if (node->got_line_feed) cerr << "[LF] ";
+    switch (node->combinator()) {
+      case Complex_Selector::ADJACENT_TO: cerr << "{+} "; break;
+      case Complex_Selector::PARENT_OF:   cerr << "{>} "; break;
+      case Complex_Selector::PRECEDES:    cerr << "{~} "; break;
+      case Complex_Selector::ANCESTOR_OF: cerr << "{ } "; break;
+    }
+    cerr << endl;
+    // debug_ast(node->combinator(), ind + "  ");
+  } else if (node->isSelector()) {
+    cerr << ind;
+    cerr << "Selector ";
+    cerr << node << " ";
+    if (node->got_line_feed) cerr << "[LF] ";
+    cerr << endl;
+    debug_ast(node->selector(), ind + "  ");
+  } else if (node->isCollection()) {
+    cerr << ind;
+    cerr << "Collection ";
+    cerr << node << " ";
+    if (node->got_line_feed) cerr << "[LF] ";
+    cerr << endl;
+    for(auto n : (*node->collection())) {
+      debug_node(&n, ind + "  ");
+    }
+  } else if (node->isNil()) {
+    cerr << ind;
+    cerr << "Nil ";
+    cerr << node << " ";
+    if (node->got_line_feed) cerr << "[LF] ";
+    cerr << endl;
+  } else {
+    cerr << ind;
+    cerr << "OTHER ";
+    cerr << node << " ";
+    if (node->got_line_feed) cerr << "[LF] ";
+    cerr << endl;
+  }
+  if (ind == "") cerr << "#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n";
 }
 
 #endif // SASS_DEBUGGER

@@ -1,4 +1,5 @@
 #include "node.hpp"
+#include "debugger.hpp"
 #include "to_string.hpp"
 
 namespace Sass {
@@ -61,6 +62,7 @@ namespace Sass {
           Node& path = *loopStartIter;
 
           Node newPermutation = Node::createCollection();
+          newPermutation.got_line_feed = arr.got_line_feed;
           newPermutation.plus(path);
           newPermutation.collection()->push_back(e);
 
@@ -108,25 +110,44 @@ namespace Sass {
     return flattened
   end
   */
-  Node flatten(const Node& arr, Context& ctx, int n = -1) {
+  Node flatten(Node& arr, Context& ctx, int n = -1) {
     if (n != -1 && n == 0) {
       return arr;
     }
 
     Node flattened = Node::createCollection();
+    if (arr.got_line_feed) flattened.got_line_feed = true;
 
     for (NodeDeque::iterator iter = arr.collection()->begin(), iterEnd = arr.collection()->end();
     	iter != iterEnd; iter++) {
     	Node& e = *iter;
 
+      // e has the lf set
       if (e.isCollection()) {
+// debug_node(&e, "ecol: ");
+      	// e.collection().got_line_feed = e.got_line_feed;
       	Node recurseFlattened = flatten(e, ctx, n - 1);
-        flattened.collection()->insert(flattened.collection()->end(), recurseFlattened.collection()->begin(), recurseFlattened.collection()->end());
+// debug_node(&recurseFlattened, "recurseFlattened: ");
+      	if(e.got_line_feed) {
+      		 flattened.got_line_feed = e.got_line_feed;
+      	  recurseFlattened.got_line_feed = e.got_line_feed;
+      	}
+
+        // if (e.selector()) e.selector()->has_line_feed(recurseFlattened.got_line_feed);
+      	for(auto i : (*recurseFlattened.collection())) {
+          if (recurseFlattened.got_line_feed) {
+// debug_node(&i, "i: ");
+            i.got_line_feed = true;
+          }
+          flattened.collection()->push_back(i);
+      	}
+// debug_node(&flattened, "ecolaf: ");
       } else {
       	flattened.collection()->push_back(e);
       }
     }
 
+// debug_node(&flattened, "flattened: ");
     return flattened;
   }
 }

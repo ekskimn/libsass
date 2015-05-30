@@ -258,6 +258,7 @@ namespace Sass {
     }
     else if (lex< sequence< optional< exactly<'*'> >, identifier > >()) {
       prop = new (mem) String_Quoted(pstate, lexed);
+      prop->is_delayed(true);
     }
     else {
       error("invalid property name", pstate);

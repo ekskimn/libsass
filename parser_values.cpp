@@ -487,7 +487,7 @@ if (operands.size() == 0) return lhs;
     --position;
 
     String_Constant* str_node = new (mem) String_Constant(pstate, str.time_wspace());
-    // str_node->is_delayed(true);
+    str_node->is_delayed(true);
     return str_node;
   }
 
