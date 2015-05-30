@@ -85,11 +85,11 @@ namespace Sass {
   	// cerr << "parse sel list " << at_root << endl;
     bool reloop = true;
     To_String to_string(&ctx);
-    lex< css_whitespace >();
     Selector_List* group = new (mem) Selector_List(pstate);
     group->media_block(last_media_block);
     do {
       reloop = false;
+      lex< css_comments >();
       if (peek< class_char < selector_list_delims > >())
         break; // in case there are superfluous commas at the end
 
@@ -100,8 +100,10 @@ namespace Sass {
 
       while (peek_css< exactly<','> >())
       {
+        lex< spaces >();
+        lex< css_comments >();
         // consume everything up and including the comma speparator
-        reloop = lex< sequence < optional_css_comments, exactly<','> > >() != 0;
+        reloop = lex< exactly<','> >() != 0;
         // remember line break (also between some commas)
         if (!sel->is_delayed()) {
         if (peek_newline()) sel->has_line_feed(true);
@@ -113,7 +115,7 @@ namespace Sass {
       (*group) << sel;
     }
     while (reloop);
-    while (lex< kwd_optional >()) {
+    while (lex_css< kwd_optional >()) {
       group->is_optional(true);
     }
     return group;
@@ -174,7 +176,7 @@ namespace Sass {
       // otherwise we need to create a new complex selector and set the old one as its tail
       else { sel = new (mem) Complex_Selector(pstate, Complex_Selector::ANCESTOR_OF, head, sel); }
       // peek for linefeed and remember result on head
-      // if (peek_newline()) head->has_line_break(true);
+      if (peek_newline()) head->has_line_break(true);
     }
 
     // complex selector
@@ -379,8 +381,8 @@ namespace Sass {
       peek <
         one_plus <
           alternatives <
-            // consume whitespace
-            block_comment, spaces,
+            // consume whitespace and comments
+            spaces, block_comment, line_comment,
             // match `/deep/` selector (pass-trough)
             // there is no functionality for it yet
             exactly<sel_deep_kwd>,

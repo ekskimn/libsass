@@ -471,6 +471,7 @@ namespace Sass {
                alternatives <
                  exactly <' '>,
                  exactly <'\t'>,
+                 line_comment,
                  delimited_by <
                    slash_star,
                    star_slash,
@@ -478,10 +479,7 @@ namespace Sass {
                  >
                >
              >,
-             alternatives <
-               exactly <'\n'>,
-               exactly <'\r'>
-             >
+             re_linebreak
            >(start) != 0;
   }
 

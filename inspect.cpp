@@ -872,7 +872,9 @@ namespace Sass {
       (*s)[i]->perform(this);
     }
     if (s->has_line_break()) {
-      append_optional_linefeed();
+      if (output_style() != COMPACT) {
+        append_optional_linefeed();
+      }
     }
   }
 
@@ -912,6 +914,11 @@ namespace Sass {
       if (c->has_line_break()) append_optional_linefeed();
     }
     if (tail) tail->perform(this);
+    if (!tail && c->has_line_break()) {
+      if (output_style() == COMPACT) {
+        append_mandatory_space();
+      }
+    }
   }
 
   void Inspect::operator()(Selector_List* g)

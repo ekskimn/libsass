@@ -240,7 +240,9 @@ extern "C" {
       bool got_newline = false;
       msg_stream << msg_prefix;
       for (char chr : e.message) {
-        if (chr == '\n') {
+        if (chr == '\r') {
+          got_newline = true;
+        } else if (chr == '\n') {
           got_newline = true;
         } else if (got_newline) {
           msg_stream << string(msg_prefix.size(), ' ');

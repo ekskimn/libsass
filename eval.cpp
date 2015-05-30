@@ -872,7 +872,6 @@ namespace Sass {
     } else if (Parent_Selector* pr = dynamic_cast<Parent_Selector*>(s)) {
       To_String to_string(&ctx);
 
-Selector* bac = 0;
 if (pr->not_selector()) {
   // bac = exp.selector_stack.back();
   // exp.selector_stack.pop_back();

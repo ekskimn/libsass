@@ -453,8 +453,6 @@ namespace Sass {
     (*env)[ss.str()] = def;
   }
 
-  static vector<Definition*>* defs;
-
   void register_overload_stub(Context& ctx, Memory_Manager<AST_Node>& mem, string name, Env* env)
   {
     Definition* stub = new (mem) Definition(ParserState("[built-in function]"),

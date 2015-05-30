@@ -131,10 +131,13 @@ namespace Sass {
 
     // ToDo: Check if we can do this different
     // At least only re-parse selector schemas
+    Output_Style style = ctx.output_style;
+    ctx.output_style = NESTED;
     Emitter emitter(&ctx);
     Inspect isp(emitter);
     sel_ctx->perform(&isp);
     string str = isp.get_buffer();
+    ctx.output_style = style;
     str += ";";
 
     Parser p(ctx, ctx.mem, r->pstate());
